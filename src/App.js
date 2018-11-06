@@ -2,6 +2,7 @@ import React from "react";
 import { Switch, Route, Redirect } from "react-router-dom";
 
 // Components
+import PrivateRoute from "./PrivateRoute";
 import Home from "./Home";
 import Navbar from "./Navbar";
 import Signup from "./Signup";
