@@ -36,6 +36,21 @@ export const login = userData => {
   };
 };
 
+export const signup = userData => {
+  return async dispatch => {
+    try {
+      const res = await axios.post(
+        "https://precious-things.herokuapp.com/signup/",
+        userData
+      );
+      const user = res.data;
+      dispatch(setCurrentUser(user.token));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+};
+
 export const logout = () => setCurrentUser();
 
 export const checkForExpiredToken = () => {
