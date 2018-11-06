@@ -1,2 +1,2 @@
 export { fetchGarbage, fetchTreasure } from "./things";
-export { login } from "./auth";
+export { login, logout } from "./auth";

@@ -1,8 +1,10 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { connect } from "react-redux";
 
 // Components
 import Login from "./Login";
+import Logout from "./Logout";
 
 const Navbar = props => {
   return (
@@ -10,9 +12,13 @@ const Navbar = props => {
       <Link to="/" className="navbar-brand">
         Navbar
       </Link>
-      <Login />
+      {props.user ? <Logout /> : <Login />}
     </nav>
   );
 };
 
-export default Navbar;
+const mapStateToProps = state => ({
+  user: state.user
+});
+
+export default connect(mapStateToProps)(Navbar);
