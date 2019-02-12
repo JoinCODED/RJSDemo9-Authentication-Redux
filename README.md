@@ -10,6 +10,63 @@
 
 #### Basic Auth
 
+3. Show that `Login.js` doesn't do anything yet.
+   Add a login action:
+
+`authActions.js`
+
+```javascript
+export const login = userData => {
+  return async dispatch => {
+    try {
+      const res = await axios.post(
+        "https://precious-things.herokuapp.com/login/",
+        userData
+      );
+      const user = res.data;
+      // For now just log user
+      console.log(user);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+};
+```
+
+4. Connect action to `Login.js`. Show the token being logged.
+
+```javascript
+...
+  handleSubmit = event => {
+    event.preventDefault();
+    this.props.login(this.state);
+  }
+...
+const mapDispatchToProps = dispatch => ({
+  login: userData => dispatch(actionCreators.login(userData))
+});
+
+export default connect(
+  null,
+  mapDispatchToProps
+)(Login);
+```
+
+5. Explain JWT. Install `jwt-decode`. Decode the token. Set the user:
+
+```bash
+$ yarn add jwt-decode
+```
+
+`authActions.js`
+
+```javascript
+...
+const user = res.data;
+console.log(jwt_decode(user.token)))
+...
+```
+
 2. Wire up some redux:
 
 `actionTypes.js`
@@ -58,10 +115,13 @@ export default combineReducers({
 ```javascript
 // NOT exported.
 // Will only be used internally by other actions.
-const setCurrentUser = user => ({
-  type: actionTypes.SET_CURRENT_USER,
-  payload: user
-});
+const setCurrentUser = token => {
+  let user = jwt_decode(token);
+  return {
+    type: actionTypes.SET_CURRENT_USER,
+    payload: user
+  };
+};
 ```
 
 `actions/index.js`
@@ -71,87 +131,27 @@ const setCurrentUser = user => ({
 export {} from "./authActions";
 ```
 
-3. Add a login action:
+```javascript
+...
+const user = res.data;
+dispatch(setCurrentUser(user.token));
+...
+```
+
+6. Still not able to make the request! Time to set the token in the axios header:
 
 `authActions.js`
 
 ```javascript
-export const login = userData => {
-  return dispatch => {
-    axios
-      .post("https://precious-things.herokuapp.com/login/", userData)
-      .then(res => res.data)
-      // For now just log user
-      .then(user => console.log(user))
-      .catch(err => console.error(err.response));
-  };
-};
-```
-
-4. Connect action to `Login.js`. Show the token being logged.
-
-```javascript
-...
-  handleSubmit(event) {
-    event.preventDefault();
-    this.props.login(this.state);
-  }
-...
-const mapDispatchToProps = dispatch => ({
-  login: userData => dispatch(actionCreators.login(userData))
-});
-
-export default connect(
-  null,
-  mapDispatchToProps
-)(Login);
-```
-
-5. Explain JWT. Install `jwt-decode`. Decode the token. Set the user:
-
-```bash
-$ yarn add jwt-decode
-```
-
-`authActions.js`
-
-```javascript
-...
-.then(user => console.log(jwt_decode(user.token)))
-...
-```
-
-to
-
-```javascript
-...
-.then(user => {
-    const decodedUser = jwt_decode(user.token);
-    dispatch(setCurrentUser(decodedUser));
-})
-...
-```
-
-6. Still not able to make the request! Time to `setAuthToken`:
-
-`authActions.js`
-
-```javascript
-const setAuthToken = token => {
+const setCurrentUser = token => {
   axios.defaults.headers.common.Authorization = `jwt ${token}`;
-};
-
-...
-
-const login = userData => {
-    ...
-    .then(user => {
-        const decodedUser = jwt_decode(user.token);
-        setAuthToken(user.token);
-        dispatch(setCurrentUser(decodedUser));
-      })
-    ...
+  let user = jwt_decode(token)
+  return {
+    type: actionTypes.SET_CURRENT_USER,
+    payload: user
+  };
 }
+...
 ```
 
 #### Signup
@@ -163,15 +163,16 @@ const login = userData => {
 ```javascript
 export const signup = userData => {
   return dispatch => {
-    axios
-      .post("https://precious-things.herokuapp.com/signup/", userData)
-      .then(res => res.data)
-      .then(user => {
-        const decodedUser = jwt_decode(user.token);
-        setAuthToken(user.token);
-        dispatch(setCurrentUser(decodedUser));
-      })
-      .catch(err => console.error(err.response));
+    try {
+      const res = await axios.post(
+        "https://precious-things.herokuapp.com/signup/",
+        userData
+      )
+      const user = res.data;
+      dispatch(setCurrentUser(user.token));
+    } catch (err) {
+      console.error(err)
+    }
   };
 };
 ```
@@ -180,7 +181,7 @@ export const signup = userData => {
 
 ```javascript
 ...
-handleSubmit(event) {
+handleSubmit = event => {
     event.preventDefault();
     this.props.signup(this.state);
 }
@@ -250,6 +251,22 @@ export default connect(mapStateToProps)(Navbar);
 `authActions.js`
 
 ```javascript
+const setCurrentUser = token => {
+  let user;
+  if (token) {
+    axios.defaults.headers.common.Authorization = `jwt ${token}`;
+    user = jwt_decode(token)
+  } else {
+    delete axios.defaults.headers.common.Authorization;
+    user = null;
+  }
+
+  return {
+    type: actionTypes.SET_CURRENT_USER,
+    payload: user
+  };
+}
+...
 export const logout = () => setCurrentUser();
 ```
 
@@ -328,12 +345,9 @@ render() {
 export const signup = (userData, history) => {
   return dispatch => {
     ...
-      .then(user => {
-        const decodedUser = jwt_decode(user.token);
-        setAuthToken(user.token);
-        dispatch(setCurrentUser(decodedUser));
-        history.push("/");
-      })
+    const user = res.data;
+    dispatch(setCurrentUser(user.token));
+    history.push("/");
     ...
   };
 };
@@ -344,7 +358,7 @@ export const signup = (userData, history) => {
 ```javascript
 class Signup extends Component {
   ...
-  handleSubmit(event) {
+  handleSubmit = event => {
     event.preventDefault();
     this.props.signup(this.state, this.props.history);
   }
@@ -357,43 +371,46 @@ const mapDispatchToProps = dispatch => ({
 });
 ```
 
-##### PrivateRoutes
+##### Private and Public-ONLY pages
 
-Don't allow users to access pages they can't use! Redirect from private pages!
+Don't allow users to access pages they can't use! Redirect from private and public ONLY pages!
 
-1. Private Route:
+1.  Redirect from `/treasure` :
 
-`PrivateRoute.js`
+`Treasure.js`
 
 ```javascript
-const PrivateRoute = ({ component: Component, user, redirectUrl, ...rest }) => (
-  <Route
-    {...rest}
-    render={props =>
-      user ? <Component {...props} /> : <Redirect to={redirectUrl || "/"} />
-    }
-  />
-);
-
+...
+render() {
+  ...
+  if (!this.props.user) return <Redirect to="/login" />;
+  ...
+}
+...
 const mapStateToProps = state => ({
   user: state.auth.user
 });
 
-export default connect(mapStateToProps)(PrivateRoute);
+export default connect(mapStateToProps)(Treasure);
 ```
 
-2. Use private route for pages that require auth:
+2.  Redirect from `Signup.js`:
 
-`App.js`
+`Signup.js`
 
 ```javascript
-<Switch>
-  <Route path="/" exact component={Home} />
-  <Route path="/garbage" component={Garbage} />
-  <PrivateRoute path="/treasure" component={Treasure} />
-  <Route path="/signup" component={Signup} />
-  <Redirect to="/" />
-</Switch>
+...
+render() {
+  ...
+  if (this.props.user) return <Redirect to="/" />;
+  ...
+}
+...
+const mapStateToProps = state => ({
+  user: state.auth.user
+});
+
+export default connect(mapStateToProps)(Signup);
 ```
 
 ##### Persistent Login
@@ -409,6 +426,24 @@ const setAuthToken = token => {
   localStorage.setItem("treasureToken", token);
   axios.defaults.headers.common.Authorization = `jwt ${token}`;
 };
+
+const setCurrentUser = token => {
+  let user;
+  if (token) {
+    localStorage.setItem("token", token);
+    axios.defaults.headers.common.Authorization = `jwt ${token}`;
+    user = jwt_decode(token);
+  } else {
+    localStorage.removeItem("token");
+    delete axios.defaults.headers.common.Authorization;
+    user = null;
+  }
+
+  return {
+    type: actionTypes.SET_CURRENT_USER,
+    payload: user
+  };
+};
 ```
 
 2. Add an action that checks for a token in localstorage:
@@ -419,20 +454,18 @@ const setAuthToken = token => {
 export const checkForExpiredToken = () => {
   return dispatch => {
     // Check for token expiration
-    const token = localStorage.treasureToken;
+    const token = localStorage.getItem("token");
 
     if (token) {
-      const currentTime = Date.now() / 1000;
+      const currentTimeInSeconds = Date.now() / 1000;
 
       // Decode token and get user info
       const user = jwt_decode(token);
 
       // Check token expiration
-      if (user.exp >= currentTime) {
-        // Set auth token header
-        setAuthToken(token);
+      if (user.exp >= currentTimeInSeconds) {
         // Set user
-        dispatch(setCurrentUser(user));
+        dispatch(setCurrentUser(token));
       } else {
         dispatch(logout());
       }
