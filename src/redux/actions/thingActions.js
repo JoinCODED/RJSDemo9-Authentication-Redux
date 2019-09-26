@@ -1,5 +1,5 @@
 import axios from "axios";
-import * as actionTypes from "./actionTypes";
+import { GET_THINGS, GET_PRIVATE_THINGS } from "./actionTypes";
 
 export const fetchGarbage = () => {
   return async dispatch => {
@@ -9,7 +9,7 @@ export const fetchGarbage = () => {
       );
       const things = res.data;
       dispatch({
-        type: actionTypes.GET_THINGS,
+        type: GET_THINGS,
         payload: things
       });
     } catch (err) {
@@ -27,7 +27,7 @@ export const fetchTreasure = () => {
 
       const things = res.data;
       dispatch({
-        type: actionTypes.GET_PRIVATE_THINGS,
+        type: GET_PRIVATE_THINGS,
         payload: things
       });
     } catch (err) {

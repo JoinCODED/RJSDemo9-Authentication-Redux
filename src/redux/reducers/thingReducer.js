@@ -1,4 +1,4 @@
-import * as actionTypes from "../actions/actionTypes";
+import { GET_THINGS, GET_PRIVATE_THINGS } from "../actions/actionTypes";
 
 const initialState = {
   public: [],
@@ -7,13 +7,13 @@ const initialState = {
 
 const reducer = (state = initialState, action) => {
   switch (action.type) {
-    case actionTypes.GET_THINGS:
+    case GET_THINGS:
       return {
         ...state,
         public: action.payload
       };
 
-    case actionTypes.GET_PRIVATE_THINGS:
+    case GET_PRIVATE_THINGS:
       return {
         ...state,
         private: action.payload

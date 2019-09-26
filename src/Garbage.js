@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import { connect } from "react-redux";
 
 // Actions
-import * as actionCreators from "./store/actions";
+import { fetchGarbage } from "./redux/actions";
 
 class Garbage extends Component {
   componentDidMount() {
@@ -32,7 +32,7 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-  getGarbage: () => dispatch(actionCreators.fetchGarbage())
+  getGarbage: () => dispatch(fetchGarbage())
 });
 
 export default connect(

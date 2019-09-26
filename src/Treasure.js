@@ -2,7 +2,8 @@ import React, { Component } from "react";
 import { connect } from "react-redux";
 
 // Actions
-import * as actionCreators from "./store/actions";
+
+import { fetchTreasure } from "./redux/actions";
 
 class Treasure extends Component {
   componentDidMount() {
@@ -32,7 +33,7 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-  getTreasure: () => dispatch(actionCreators.fetchTreasure())
+  getTreasure: () => dispatch(fetchTreasure())
 });
 
 export default connect(
