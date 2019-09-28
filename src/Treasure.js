@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import { Redirect } from "react-router-dom";
 import { connect } from "react-redux";
 
 // Actions
@@ -10,6 +11,8 @@ class Treasure extends Component {
   }
 
   render() {
+    if (!this.props.user) return <Redirect to="/" />;
+
     const rows = this.props.treasure.map(thing => (
       <tr key={thing.name} className="table-warning">
         <td>{thing.name}</td>
@@ -28,7 +31,8 @@ class Treasure extends Component {
 }
 
 const mapStateToProps = state => ({
-  treasure: state.things.private
+  treasure: state.things.private,
+  user: state.user
 });
 
 const mapDispatchToProps = dispatch => ({
