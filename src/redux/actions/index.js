@@ -1,1 +1,1 @@
-export { fetchGarbage, fetchTreasure } from "./thingActions";
+export { fetchGarbage, fetchTreasure } from "./things";

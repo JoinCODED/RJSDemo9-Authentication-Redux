@@ -1,6 +1,4 @@
-# RJSDemo8 - Forms
-
-[Slides](https://docs.google.com/presentation/d/1VNDFN2oIkKLUpKRZ7hkiRjyJTv3d7-Lp6eZJPZn2P5E/edit?usp=sharing)
+# RJSDemo9 - Authentication
 
 1. Walk through the code:
 
@@ -36,7 +34,7 @@
 3. Connect action to `Login.js`. Show the token being logged.
 
    ```javascript
-   import {login} from './
+   import { login } from './redux/actions'
    ...
      handleSubmit = event => {
        event.preventDefault();
