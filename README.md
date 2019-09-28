@@ -11,7 +11,7 @@
 2. Show that `Login.js` doesn't do anything yet.
    Add a login action:
 
-   `authActions.js`
+   `auth.js`
 
    ```javascript
    export const login = userData => {
@@ -31,7 +31,7 @@
    };
    ```
 
-3. Connect action to `Login.js`. Show the token being logged.
+3. Connect action to `Login.js`. Show the token being logged. (username: `khalid`, password: `kalesalad`)
 
    ```javascript
    import { login } from './redux/actions'
@@ -57,7 +57,7 @@
    $ yarn add jwt-decode
    ```
 
-   `authActions.js`
+   `actions/auth.js`
 
    ```javascript
    ...
@@ -68,28 +68,23 @@
 
 5. Wire up some redux:
 
-   `actionTypes.js`
+   `actions/actionTypes.js`
 
    ```javascript
    export const SET_CURRENT_USER = "SET_CURRENT_USER";
    ```
 
-   `authReducer.js`
+   `reducers/auth.js`
 
    ```javascript
-   import * as actionTypes from "../actions/actionTypes";
+   import { SET_CURRENT_USER } from "../actions/actionTypes";
 
-   const initialState = {
-     user: null
-   };
+   const initialState = null;
 
    export default (state = initialState, action) => {
      switch (action.type) {
-       case actionTypes.SET_CURRENT_USER:
-         return {
-           ...state,
-           user: action.payload
-         };
+       case SET_CURRENT_USER:
+         return action.payload;
 
        default:
          return state;
@@ -109,7 +104,7 @@
    });
    ```
 
-   `authActions.js`
+   `actions/auth.js`
 
    ```javascript
    // NOT exported.
@@ -123,41 +118,31 @@
    };
    ```
 
-   `actions/index.js`
-
    ```javascript
-   // Nothing to export yet
-   export {} from "./authActions";
-   ```
-
-   ```javascript
-   ...
    const user = res.data;
    dispatch(setCurrentUser(user.token));
-   ...
    ```
 
 6. Still not able to make the request! Time to set the token in the axios header:
 
-   `authActions.js`
+   `actions/auth.js`
 
    ```javascript
    const setCurrentUser = token => {
      axios.defaults.headers.common.Authorization = `jwt ${token}`;
-     let user = jwt_decode(token)
+     let user = jwt_decode(token);
      return {
        type: actionTypes.SET_CURRENT_USER,
        payload: user
      };
-   }
-   ...
+   };
    ```
 
 #### Signup
 
 7. Implement signup action:
 
-   `authActions.js`
+   `actions/auth.js`
 
    ```javascript
    export const signup = userData => {
@@ -186,7 +171,7 @@
    }
    ...
    const mapDispatchToProps = dispatch => ({
-     signup: userData => dispatch(actionCreators.signup(userData))
+     signup: userData => dispatch(signup(userData))
    });
 
    export default connect(
@@ -216,7 +201,7 @@
    };
 
    const mapStateToProps = state => ({
-     user: state.auth.user
+     user: state.user
    });
 
    export default connect(mapStateToProps)(Logout);
@@ -239,7 +224,7 @@
    };
 
    const mapStateToProps = state => ({
-     user: state.auth.user
+     user: state.user
    });
 
    export default connect(mapStateToProps)(Navbar);
@@ -247,7 +232,7 @@
 
 3. Logout action:
 
-   `authActions.js`
+   `actions/auth.js`
 
    ```javascript
    const setCurrentUser = token => {
@@ -261,7 +246,7 @@
      }
 
      return {
-       type: actionTypes.SET_CURRENT_USER,
+       type: SET_CURRENT_USER,
        payload: user
      };
    }
@@ -275,14 +260,14 @@
 
    ```javascript
    // Actions
-   import * as actionCreators from "./store/actions";
+   import { logout } from "./redux/actions";
    ...
    <button className="btn btn-danger" onClick={props.logout}>
        Logout {props.user.username}
    </button>
    ...
    const mapDispatchToProps = dispatch => ({
-     logout: () => dispatch(actionCreators.logout())
+     logout: () => dispatch(logout())
    });
    ```
 
@@ -306,7 +291,7 @@
    };
 
    const mapStateToProps = state => ({
-     user: state.auth.user
+     user: state.user
    });
    ```
 
@@ -338,7 +323,7 @@
 
 2. Modify action to accept `history`:
 
-   `authActions.js`
+   `actions/auth.js`
 
    ```javascript
    export const signup = (userData, history) => {
@@ -366,7 +351,7 @@
 
    const mapDispatchToProps = dispatch => ({
      signup: (userData, history) =>
-       dispatch(actionCreators.signup(userData, history))
+       dispatch(signup(userData, history))
    });
    ```
 
@@ -387,7 +372,7 @@ Don't allow users to access pages they can't use! Redirect from private and publ
     }
     ...
     const mapStateToProps = state => ({
-      user: state.auth.user
+      user: state.user
     });
 
     export default connect(mapStateToProps)(Treasure);
@@ -406,7 +391,7 @@ Don't allow users to access pages they can't use! Redirect from private and publ
     }
     ...
     const mapStateToProps = state => ({
-      user: state.auth.user
+      user: state.user
     });
 
     export default connect(mapStateToProps)(Signup);
@@ -418,14 +403,9 @@ If the page refreshes after sign in, I should STILL be signed in!
 
 1. Store the token in local storage:
 
-   `authActions.js`
+   `actions/auth.js`
 
    ```javascript
-   const setAuthToken = token => {
-     localStorage.setItem("treasureToken", token);
-     axios.defaults.headers.common.Authorization = `jwt ${token}`;
-   };
-
    const setCurrentUser = token => {
      let user;
      if (token) {
@@ -439,7 +419,7 @@ If the page refreshes after sign in, I should STILL be signed in!
      }
 
      return {
-       type: actionTypes.SET_CURRENT_USER,
+       type: SET_CURRENT_USER,
        payload: user
      };
    };
@@ -447,7 +427,7 @@ If the page refreshes after sign in, I should STILL be signed in!
 
 2. Add an action that checks for a token in localstorage:
 
-   `authActions.js`
+   `actions/auth.js`
 
    ```javascript
    export const checkForExpiredToken = () => {
@@ -473,22 +453,19 @@ If the page refreshes after sign in, I should STILL be signed in!
    };
    ```
 
-3. Call the action from `componentDidMount` in `App.js`:
+3. Call the action from `redux/index.js`:
 
    ```javascript
-   class App extends Component {
-     componentDidMount() {
-       this.props.checkToken();
-     }
-     ...
-   }
+   // Actions
+   import { checkForExpiredToken } from "./actions";
 
-   const mapDispatchToProps = dispatch => ({
-     checkToken: () => dispatch(actionCreators.checkForExpiredToken())
-   });
+   const composeEnhancers =
+     window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 
-   export default connect(
-     null,
-     mapDispatchToProps
-   )(App);
+   const store = createStore(
+     rootReducer,
+     composeEnhancers(applyMiddleware(thunk))
+   );
+
+   store.dispatch(checkForExpiredToken());
    ```
