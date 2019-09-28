@@ -12,7 +12,10 @@ class Login extends Component {
 
   handleSubmit = event => {
     event.preventDefault();
-    console.log(this.state);
+    alert(`
+    YOUR USERNAME IS "${this.state.username}"
+    YOUR PASSWORD IS "${this.state.password}"
+    `);
   };
 
   render() {
