@@ -327,7 +327,7 @@
 
    ```javascript
    export const signup = (userData, history) => {
-     return dispatch => {
+     return async dispatch => {
        ...
        const user = res.data;
        dispatch(setCurrentUser(user.token));
