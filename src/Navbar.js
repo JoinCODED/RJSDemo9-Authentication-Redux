@@ -6,19 +6,19 @@ import { connect } from "react-redux";
 import Login from "./Login";
 import Logout from "./Logout";
 
-const Navbar = props => {
+const Navbar = ({ user }) => {
   return (
     <nav className="navbar navbar-dark bg-dark">
       <Link to="/" className="navbar-brand">
         Navbar
       </Link>
-      {props.user ? <Logout /> : <Login />}
+      {user ? <Logout /> : <Login />}
     </nav>
   );
 };
 
-const mapStateToProps = state => ({
-  user: state.user
+const mapStateToProps = ({ user }) => ({
+  user
 });
 
 export default connect(mapStateToProps)(Navbar);

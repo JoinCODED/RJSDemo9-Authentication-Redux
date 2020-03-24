@@ -2,9 +2,9 @@ import { combineReducers } from "redux";
 
 // Reducers
 import thingReducer from "./things";
-import authReducer from "./auth";
+import userReducer from "./user";
 
 export default combineReducers({
   things: thingReducer,
-  user: authReducer
+  user: userReducer
 });

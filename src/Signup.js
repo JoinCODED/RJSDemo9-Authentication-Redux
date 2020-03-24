@@ -1,6 +1,6 @@
 import React, { Component } from "react";
-import { connect } from "react-redux";
 import { Redirect } from "react-router-dom";
+import { connect } from "react-redux";
 
 // Actions
 import { signup } from "./redux/actions";
@@ -17,7 +17,7 @@ class Signup extends Component {
 
   handleSubmit = event => {
     event.preventDefault();
-    this.props.signup(this.state, this.props.history);
+    this.props.signup(this.state);
   };
 
   render() {
@@ -78,15 +78,12 @@ class Signup extends Component {
   }
 }
 
-const mapStateToProps = state => ({
-  user: state.user
+const mapStateToProps = ({ user }) => ({
+  user
 });
 
 const mapDispatchToProps = dispatch => ({
-  signup: (userData, history) => dispatch(signup(userData, history))
+  signup: userData => dispatch(signup(userData))
 });
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(Signup);
+export default connect(mapStateToProps, mapDispatchToProps)(Signup);

@@ -1,6 +1,6 @@
-import instance from "./instance";
-
 import { GET_THINGS, GET_PRIVATE_THINGS } from "./actionTypes";
+
+import instance from "./instance";
 
 export const fetchGarbage = () => async dispatch => {
   try {
