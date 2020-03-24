@@ -14,16 +14,11 @@
    `auth.js`
 
    ```javascript
-   export const login = userData => {
-     return async dispatch => {
+   export const login = userData => async dispatch => {
        try {
-         const res = await axios.post(
-           "https://precious-things.herokuapp.com/login/",
-           userData
-         );
-         const user = res.data;
-         // For now just log user
-         console.log(user);
+         const res = await instance.post("/login/", userData);
+         // For now just log response
+         console.log(res.data);
        } catch (err) {
          console.error(err);
        }
@@ -61,8 +56,8 @@
 
    ```javascript
    ...
-   const user = res.data;
-   console.log(jwt_decode(user.token)))
+   const { token } = res.data;
+   console.log(decode(token)))
    ...
    ```
 
@@ -74,7 +69,7 @@
    export const SET_CURRENT_USER = "SET_CURRENT_USER";
    ```
 
-   `reducers/auth.js`
+   `reducers/user.js`
 
    ```javascript
    import { SET_CURRENT_USER } from "../actions/actionTypes";
@@ -95,12 +90,12 @@
    `reducers/index.js`
 
    ```javascript
-   import thingReducer from "./thingReducer";
-   import authReducer from "./authReducer";
+   import thingReducer from "./things";
+   import userReducer from "./user";
 
    export default combineReducers({
      things: thingReducer,
-     auth: authReducer
+     user: userReducer
    });
    ```
 
@@ -110,7 +105,7 @@
    // NOT exported.
    // Will only be used internally by other actions.
    const setCurrentUser = token => {
-     let user = jwt_decode(token);
+     const user = decode(token);
      return {
        type: actionTypes.SET_CURRENT_USER,
        payload: user
@@ -128,9 +123,13 @@
    `actions/auth.js`
 
    ```javascript
+   const setAuthToken = token => {
+     instance.defaults.headers.Authorization = `jwt ${token}`;
+   };
+
    const setCurrentUser = token => {
-     axios.defaults.headers.common.Authorization = `jwt ${token}`;
-     let user = jwt_decode(token);
+     setAuthToken(token);
+     const user = decode(token);
      return {
        type: actionTypes.SET_CURRENT_USER,
        payload: user
@@ -145,20 +144,16 @@
    `actions/auth.js`
 
    ```javascript
-   export const signup = userData => {
-     return dispatch => {
-       try {
-         const res = await axios.post(
-           "https://precious-things.herokuapp.com/signup/",
-           userData
-         )
-         const user = res.data;
-         dispatch(setCurrentUser(user.token));
-       } catch (err) {
-         console.error(err)
-       }
-     };
+   export const signup = userData => dispatch => {
+      try {
+        const res = await instance.post("/signup/", userData);
+        const { token } = res.data;
+        dispatch(setCurrentUser(token));
+      } catch (err) {
+        console.error(err)
+      }
    };
+
    ```
 
 8. Connect to `Signup.js`. This will work BUT THE UX IS BAD (no indication that it worked!):
@@ -166,8 +161,8 @@
    ```javascript
    ...
    handleSubmit = event => {
-       event.preventDefault();
-       this.props.signup(this.state);
+      event.preventDefault();
+      this.props.signup(this.state);
    }
    ...
    const mapDispatchToProps = dispatch => ({
@@ -192,16 +187,16 @@
    import React from "react";
    import { connect } from "react-redux";
 
-   const Logout = props => {
+   const Logout = ({ user }) => {
      return (
        <button className="btn btn-danger" onClick={() => alert("LOGOUT!!")}>
-         Logout {props.user.username}
+         Logout {user.username}
        </button>
      );
    };
 
-   const mapStateToProps = state => ({
-     user: state.user
+   const mapStateToProps = ({ user }) => ({
+     user
    });
 
    export default connect(mapStateToProps)(Logout);
@@ -212,19 +207,19 @@
    `Navbar.js`
 
    ```javascript
-   const Navbar = props => {
+   const Navbar = ({ user }) => {
      return (
        <nav className="navbar navbar-dark bg-dark">
          <Link to="/" className="navbar-brand">
            Navbar
          </Link>
-         {props.user ? <Logout /> : <Login />}
+         {user ? <Logout /> : <Login />}
        </nav>
      );
    };
 
-   const mapStateToProps = state => ({
-     user: state.user
+   const mapStateToProps = ({ user }) => ({
+     user
    });
 
    export default connect(mapStateToProps)(Navbar);
@@ -235,21 +230,16 @@
    `actions/auth.js`
 
    ```javascript
-   const setCurrentUser = token => {
-     let user;
-     if (token) {
-       axios.defaults.headers.common.Authorization = `jwt ${token}`;
-       user = jwt_decode(token)
-     } else {
-       delete axios.defaults.headers.common.Authorization;
-       user = null;
-     }
+    const setCurrentUser = token => {
+      setAuthToken(token);
 
-     return {
-       type: SET_CURRENT_USER,
-       payload: user
-     };
-   }
+      const user = token ? decode(token) : null;
+
+      return {
+        type: SET_CURRENT_USER,
+        payload: user
+      };
+    };
    ...
    export const logout = () => setCurrentUser();
    ```
@@ -262,8 +252,8 @@
    // Actions
    import { logout } from "./redux/actions";
    ...
-   <button className="btn btn-danger" onClick={props.logout}>
-       Logout {props.user.username}
+   <button className="btn btn-danger" onClick={logout}>
+       Logout {user.username}
    </button>
    ...
    const mapDispatchToProps = dispatch => ({
@@ -278,10 +268,10 @@
    `Home.js`
 
    ```javascript
-   const Home = props => {
+   const Home = ({user}) => {
      return (
        ...
-       {props.user && (
+       {user && (
        <Link to="/treasure" className="btn btn-lg btn-warning mx-auto">
            TREASURE
        </Link>
@@ -290,8 +280,8 @@
      );
    };
 
-   const mapStateToProps = state => ({
-     user: state.user
+   const mapStateToProps = ({user}) => ({
+     user
    });
    ```
 
@@ -326,15 +316,14 @@
    `actions/auth.js`
 
    ```javascript
-   export const signup = (userData, history) => {
-     return async dispatch => {
-       ...
-       const user = res.data;
-       dispatch(setCurrentUser(user.token));
-       history.push("/");
-       ...
-     };
-   };
+    export const signup = (userData, history) => async dispatch => {
+      ...
+      const user = res.data;
+      dispatch(setCurrentUser(user.token));
+      history.push("/");
+      ...
+    };
+
    ```
 
    `Signup.js`
@@ -371,8 +360,8 @@ Don't allow users to access pages they can't use! Redirect from private and publ
       ...
     }
     ...
-    const mapStateToProps = state => ({
-      user: state.user
+    const mapStateToProps = ({user}) => ({
+      user
     });
 
     export default connect(mapStateToProps)(Treasure);
@@ -390,8 +379,8 @@ Don't allow users to access pages they can't use! Redirect from private and publ
       ...
     }
     ...
-    const mapStateToProps = state => ({
-      user: state.user
+    const mapStateToProps = ({user}) => ({
+      user
     });
 
     export default connect(mapStateToProps)(Signup);
@@ -406,22 +395,14 @@ If the page refreshes after sign in, I should STILL be signed in!
    `actions/auth.js`
 
    ```javascript
-   const setCurrentUser = token => {
-     let user;
+   const setAuthToken = token => {
      if (token) {
        localStorage.setItem("token", token);
-       axios.defaults.headers.common.Authorization = `jwt ${token}`;
-       user = jwt_decode(token);
+       instance.defaults.headers.Authorization = `jwt ${token}`;
      } else {
+       delete instance.defaults.headers.Authorization;
        localStorage.removeItem("token");
-       delete axios.defaults.headers.common.Authorization;
-       user = null;
      }
-
-     return {
-       type: SET_CURRENT_USER,
-       payload: user
-     };
    };
    ```
 
@@ -431,25 +412,23 @@ If the page refreshes after sign in, I should STILL be signed in!
 
    ```javascript
    export const checkForExpiredToken = () => {
-     return dispatch => {
-       // Check for token expiration
-       const token = localStorage.getItem("token");
+     // Get the token from local storage
+     const token = localStorage.getItem("token");
 
-       if (token) {
-         const currentTimeInSeconds = Date.now() / 1000;
+     if (token) {
+       const currentTimeInSeconds = Date.now() / 1000;
 
-         // Decode token and get user info
-         const user = jwt_decode(token);
+       // Decode token and get user info
+       const user = decode(token);
 
-         // Check token expiration
-         if (user.exp >= currentTimeInSeconds) {
-           // Set user
-           dispatch(setCurrentUser(token));
-         } else {
-           dispatch(logout());
-         }
+       // Check token expiration
+       if (user.exp >= currentTimeInSeconds) {
+         // Set user
+         return setCurrentUser(token);
        }
-     };
+     }
+
+     return setCurrentUser();
    };
    ```
 
