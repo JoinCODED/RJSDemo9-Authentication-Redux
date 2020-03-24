@@ -2,7 +2,6 @@ import React, { Component } from "react";
 import { connect } from "react-redux";
 
 // Actions
-
 import { fetchTreasure } from "./redux/actions";
 
 class Treasure extends Component {
@@ -36,7 +35,4 @@ const mapDispatchToProps = dispatch => ({
   getTreasure: () => dispatch(fetchTreasure())
 });
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(Treasure);
+export default connect(mapStateToProps, mapDispatchToProps)(Treasure);
